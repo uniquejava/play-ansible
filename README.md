@@ -240,3 +240,48 @@ playbook_newuser.yml (其中模板中的user和user_password来自vars/vault.yml
 ```sh
 ansible-playbook --ask-become-pass --ask-vault-pass -i inventory.yml playbook_newuser.yml
 ```
+
+## playbook 拆分子任务到独立文件
+
+### 定义子任务
+
+ansible/tasks/newuser.yml
+
+```yml
+- name: Create User and Set Password
+  ansible.builtin.­user:
+    name: "{{ user }}"
+    password: "{{ user_password }}"
+    home: "/home/{{ user }}"
+    shell: /bin/bash
+```
+
+
+### playbook包含子任务
+
+ansible/playbook_newuser.yml
+
+```yml {9}
+- hosts: all
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/vars.yml
+    - vars/vault.yml
+  tasks:
+    - name: Create User and Set Password
+      include_tasks: tasks/newuser.yml
+```
+
+### 执行playbook
+
+- J 等价于 --ask-vault-password
+- K 等价于 --ask-become-pass
+- b 等价于 --become
+- i  指定 inventory文件
+- 可以合并为 -JKbi
+
+```
+
+ansible-playbook -J -K -i inventory.yml playbook_newuser.yml
+```
